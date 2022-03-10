@@ -1,0 +1,123 @@
+# pre-req is to create a source table/view that contains std. fields. see input below
+# fieldnames. otherwise will have to match each table like
+# note that emails, phones should be split into rows with corresponding personal information
+  # e.g. VAN profile with two phone numbers will lead to two rows here
+  # TODO - if person has 2 jobs and 3 phones, should that make 2*3 records here? why not...
+  # how best to link chapters? "VAN Employer Name 1:1 match with UW? How about bargaining units?" - some spelling is different
+
+linkages:
+  - name: chapter # name is for organizing, not used
+    version: 0.1
+    active: false
+    input:
+      schema: chapter_schema
+      table: chapter_table
+    entities:
+      - name: chapter
+        output_id: chapter_id
+        matches:
+          - vars: ["name"]
+  - name: member_job
+    active: false # mark 'true' to start running via CLI
+    version: 0.1 # update version to reprocess all with new params
+    input:
+      schema: schema
+      table: table
+      columns:
+        - name: full_name
+          - parse: name
+        - name: address_full
+          - parse: address
+    entities:
+      - name: job
+        output_id: job_id
+        blocking_variables:
+          - name: chapter
+        matches: # list of matches -carried out in order
+          - vars:
+            - name: firstname
+            - name: lastname
+            - name: birthdate
+          - vars:
+      - match: person
+        matches:
+          - vars:
+          - vars: ["firstname", "lastname", "birthdate"]
+          - vars: ["person_id"]
+          - vars: ["VANID"]
+          - vars: ["UWID"]
+
+
+## BRAINSTORMING BELOW
+
+# sources for table will be UW, VAN, Digital Cards
+  # BU lists (eventually), Dues files (eventually)
+
+output:
+  - name: chapter_id
+  - name: person_id
+  - name: job_id
+
+
+# specify match sequence
+# specify to split names and address if raw data?
+
+sample_inputs:
+  - name: chapter
+    input:
+    schema: chapter_schema
+    table: chapter_table
+    columns:
+      - name: name
+  - input:
+      schema: schema
+      table: table
+      columns: # this is helpful to specify pre-dwh, but that other than specifying columns that need to be "parsed", this shouldn't go here
+        - name: source_id
+        - name: source_schema
+        - name: source_table
+        - name: given_name
+        - name: surname
+        - name: full_name
+          - parse: name
+        - name: birthdate
+        - name: address_line_1
+        - name: zip_code
+        - name: address_full
+          - parse: address
+        - name: email
+        - name: phone
+        - name: job_title
+        - name: job_id
+        - name: employee_id
+        - name: employer_name
+        - name: bargaining_unit
+        - name: department
+        - name: van_person_id
+        - name: van_committee
+        - name: van_job_id
+        - name: uw_person_id
+        - name: uw_job_id
+        - name: dwh_person_id
+        - name: dwh_job_id
+
+output_models:
+  models:
+    - name: namesplit
+      description: names split by python when no match found
+    - name: addresssplit
+      description: address split by pthon when no match found
+    - name: lookup
+      columns:
+        - name: source_id
+        - name: source_schema
+        - name: source_table
+        - name: dwh_id
+        - name: dwh_id_name
+        - name: date_matched
+    - name: record
+      description: each run of recordlinkage
+      columns:
+        - name: datetime
+        - name: status
+        - name: id
