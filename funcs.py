@@ -7,6 +7,7 @@ import humps
 # TODO consider street name formatting, standardization ("ave","AV","AVE.", "avenue" all saved separate at the moment"
 # TODO consider lookups for common spellings ("philly, phila.")
 
+#test
 
 def address_str_to_dict(string="5757 South Woodlawn avenue, Chicago, IL 60637"):
     d = dict.fromkeys(usaddress.LABELS)
