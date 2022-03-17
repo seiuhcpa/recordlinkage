@@ -1,123 +1,100 @@
 # pre-req is to create a source table/view that contains std. fields. see input below
-# fieldnames. otherwise will have to match each table like
 # note that emails, phones should be split into rows with corresponding personal information
   # e.g. VAN profile with two phone numbers will lead to two rows here
-  # TODO - if person has 2 jobs and 3 phones, should that make 2*3 records here? why not...
   # how best to link chapters? "VAN Employer Name 1:1 match with UW? How about bargaining units?" - some spelling is different
 
 linkages:
+  - name: member_job
+    version: 0.1 # update version to reprocess all with new params
+    input:
+      schema: input_schema
+      table: input_table
+    entities:
+      - name: job
+        output_id: job_id
+        training_file: file_location.json
+        variable_blocks: # only compare records with matching blocked variable (if present)
+          - field: chapter # chapter from previous linkage
+          - field: uw_job_id
+            has missing: True
+        variable_definitions: # YML version of settings for dedupe.io https://docs.dedupe.io/en/latest/Variable-definition.html
+          - field: uw_person_id
+            type: Exact
+          - field: first_name
+            type: String
+          - field: last_name
+            type: String
+          - field: hire_date
+            type: DateTime
+            has missing: True
+          - field: birth_date
+            type: DateTime
+            has missing: True
+          - field: employee_id
+            type: Exact
+            has missing: True
+          - field: card_sign_date
+            type: DateTime
+            has missing: True
+          - field: zip_code
+            type: Exact
+            has missing: True
+          - field: street_address
+            type: String
+            has missing: True
+          - field: phone # IF DUPLICATES 1 PER ROW
+            type: Exact
+            has missing: True
+          - field: email # IF DUPLICATES 1 PER ROW
+            type: Exact
+            has missing: True
+          - field: department
+            type: string
+            has missing: True
+          - field: work_area # same as department on cards
+            type: string
+            has missing: True
+          - field: job_title
+            type: string
+            has missing: True
+      - name: person
+        output_id: person_id
+        variable_blocks: # only compare records with matching blocked variable (if present)
+          - field: uw_person_id
+            has missing: True
+          - field: uw_job_id
+            has missing: True
+        variable_definitions: # YML version of settings for dedupe.io https://docs.dedupe.io/en/latest/Variable-definition.html
+          - field: uw_person_id
+            type: Exact
+          - field: uw_job_id
+            type: Exact
+          - field: first_name
+            type: String
+          - field: last_name
+            type: String
+          - field: birth_date
+            type: DateTime
+            has missing: True
   - name: chapter # name is for organizing, not used
     version: 0.1
     active: false
     input:
-      schema: chapter_schema
-      table: chapter_table
+      schema: input_schema
+      table: input_table
     entities:
       - name: chapter
         output_id: chapter_id
-        matches:
-          - vars: ["name"]
-  - name: member_job
-    active: false # mark 'true' to start running via CLI
-    version: 0.1 # update version to reprocess all with new params
-    input:
-      schema: schema
-      table: table
-      columns:
-        - name: full_name
-          - parse: name
-        - name: address_full
-          - parse: address
-    entities:
-      - name: job
-        output_id: job_id
-        blocking_variables:
-          - name: chapter
-        matches: # list of matches -carried out in order
-          - vars:
-            - name: firstname
-            - name: lastname
-            - name: birthdate
-          - vars:
-      - match: person
-        matches:
-          - vars:
-          - vars: ["firstname", "lastname", "birthdate"]
-          - vars: ["person_id"]
-          - vars: ["VANID"]
-          - vars: ["UWID"]
 
 
 ## BRAINSTORMING BELOW
 
-# sources for table will be UW, VAN, Digital Cards
-  # BU lists (eventually), Dues files (eventually)
-
-output:
-  - name: chapter_id
-  - name: person_id
-  - name: job_id
-
-
-# specify match sequence
-# specify to split names and address if raw data?
-
-sample_inputs:
-  - name: chapter
-    input:
-    schema: chapter_schema
-    table: chapter_table
-    columns:
-      - name: name
-  - input:
-      schema: schema
-      table: table
-      columns: # this is helpful to specify pre-dwh, but that other than specifying columns that need to be "parsed", this shouldn't go here
-        - name: source_id
-        - name: source_schema
-        - name: source_table
-        - name: given_name
-        - name: surname
+# add to input schema to specify columns for parsing
+      columns:
         - name: full_name
           - parse: name
-        - name: birthdate
-        - name: address_line_1
-        - name: zip_code
         - name: address_full
           - parse: address
-        - name: email
-        - name: phone
-        - name: job_title
-        - name: job_id
-        - name: employee_id
-        - name: employer_name
-        - name: bargaining_unit
-        - name: department
-        - name: van_person_id
-        - name: van_committee
-        - name: van_job_id
-        - name: uw_person_id
-        - name: uw_job_id
-        - name: dwh_person_id
-        - name: dwh_job_id
 
-output_models:
-  models:
-    - name: namesplit
-      description: names split by python when no match found
-    - name: addresssplit
-      description: address split by pthon when no match found
-    - name: lookup
-      columns:
-        - name: source_id
-        - name: source_schema
-        - name: source_table
-        - name: dwh_id
-        - name: dwh_id_name
-        - name: date_matched
-    - name: record
-      description: each run of recordlinkage
-      columns:
-        - name: datetime
-        - name: status
-        - name: id
+
+

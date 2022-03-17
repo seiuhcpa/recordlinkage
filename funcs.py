@@ -33,5 +33,3 @@ def name_str_to_dict(string="Davids, David Dave Davie", type='person'):
 def test_parse():
     print(name_str_to_dict())
     print(address_str_to_dict())
-
-test_parse()
